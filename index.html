@@ -38,13 +38,15 @@ th{background:#e7eeef}.num{text-align:right}
 <p>Plan, record, review. Your records stay on this device.</p></header>
 <nav id="nav" aria-label="Sections"></nav>
 <main>
+<div class="note" id="bkbanner" style="display:none" role="status"></div>
 <div class="note" id="warnstore">This browser is not letting the app save. Anything you enter will be lost when you close this page. Use Backup to download your records, or try a different browser.</div>
 
 <section id="s-today" class="on"><h2>Today</h2>
 <div class="card"><h3>Quick record</h3>
 <p class="small">Tap what just happened. It is saved with the current date and time and the place chosen below. You can fix any entry in the Log.</p>
 <label for="qwhere">Where</label><select id="qwhere"></select>
-<div class="quick" id="quick" style="margin-top:10px"></div></div>
+<div class="quick" id="quick" style="margin-top:10px"></div>
+<p id="qmsg" role="status" class="small" style="min-height:1.4em;margin:10px 0 0"></p></div>
 <div class="card"><h3>Today so far</h3><div id="todaybox"></div></div>
 <div class="note">General educational tool. It does not diagnose anything and is not veterinary advice. If a dog who was reliable suddenly has accidents, or you see blood, straining, pain, or big changes in thirst or urination, call your veterinarian first.</div></section>
 
@@ -86,7 +88,9 @@ th{background:#e7eeef}.num{text-align:right}
 
 <section id="s-bk"><h2>Backup and print</h2>
 <div class="card"><h3>Download a backup</h3><p class="small">Saves everything in this app to a file on your device. Do this regularly, because clearing your browser data erases the app's records.</p>
+<p id="lastbk" class="small"></p>
 <button class="pri" id="bexp">Download backup file</button>
+<h3>Download as a spreadsheet (CSV)</h3><p class="small">Opens in Excel or Google Sheets. Good for keeping your own copy or bringing your records to a vet visit. This is not a backup you can restore from.</p><button class="sec" id="bcsv">Download CSV</button>
 <h3>Restore from a backup</h3><input type="file" id="bimp" accept=".json,application/json">
 <h3>Print</h3><button class="sec" id="bprint">Print this page</button>
 <h3>Clear all records</h3><p class="small">Removes everything from this device. This cannot be undone.</p><button class="dan" id="bclear">Clear everything</button>
@@ -102,10 +106,17 @@ var WIN=["12 am to 3 am","3 am to 6 am","6 am to 9 am","9 am to 12 pm","12 pm to
 var KEY="ppsca_v1", mem=null, storeOK=true;
 function load(){var d;try{var s=localStorage.getItem(KEY);d=s?JSON.parse(s):null}catch(e){storeOK=false;d=mem}
  if(!d||typeof d!=="object")d={v:1,events:[],plan:{},week:{}};
- d.events=Array.isArray(d.events)?d.events:[];d.plan=d.plan||{};d.week=d.week||{};return d}
+ d.events=Array.isArray(d.events)?d.events:[];d.plan=d.plan||{};d.week=d.week||{};if(!d.firstUse)d.firstUse=Date.now();return d}
 var D=load();
 function save(){mem=D;try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){storeOK=false}
- document.getElementById("warnstore").style.display=storeOK?"none":"block"}
+ document.getElementById("warnstore").style.display=storeOK?"none":"block";renderBk()}
+var DAY=86400000;
+function needsBackup(d,now){var n=d.events.length-(d.backupCount||0);if(d.lastBackup&&n<0)n=d.events.length;if(n<=0)return false;
+ var ref=d.lastBackup||d.firstUse||now;return n>=25||(now-ref)>=7*DAY}
+function renderBk(){var b=$("bkbanner"),l=$("lastbk");if(!b||!l)return;
+ l.textContent=D.lastBackup?"Last backup: "+new Date(D.lastBackup).toLocaleDateString():"Last backup: never";
+ if(needsBackup(D,Date.now())){b.style.display="block";b.innerHTML="Time to back up your records. Records live only in this browser and can be erased if browser data is cleared. Open <b>Backup and print</b> and download a backup file."}else b.style.display="none"}
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})}catch(e){}
 function validDate(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||""))return false;var p=s.split("-").map(Number),t=new Date(Date.UTC(p[0],p[1]-1,p[2]));return t.getUTCFullYear()===p[0]&&t.getUTCMonth()===p[1]-1&&t.getUTCDate()===p[2]}
 function validTime(s){return /^([01]\d|2[0-3]):[0-5]\d$/.test(s||"")}
 function weekStart(s){var p=s.split("-").map(Number),t=new Date(Date.UTC(p[0],p[1]-1,p[2]));var dow=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dow);return t.toISOString().slice(0,10)}
@@ -130,7 +141,7 @@ function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function opts(el,arr){el.innerHTML=arr.map(function(a){return"<option>"+esc(a)+"</option>"}).join("")}
 var tabs=[["today","Today"],["log","Log"],["sum","Summary"],["plan","Routine"],["week","Weekly review"],["bk","Backup and print"]];
-function show(id){tabs.forEach(function(t){$("s-"+t[0]).classList.toggle("on",t[0]===id)});
+function show(id){lastQ=null;if($("qmsg"))$("qmsg").textContent="";tabs.forEach(function(t){$("s-"+t[0]).classList.toggle("on",t[0]===id)});
  Array.prototype.forEach.call($("nav").children,function(b){b.setAttribute("aria-current",b.dataset.t===id?"true":"false")});
  if(id==="sum")renderSum();if(id==="log")renderLog();if(id==="today")renderToday()}
 $("nav").innerHTML=tabs.map(function(t){return'<button type="button" data-t="'+t[0]+'">'+t[1]+"</button>"}).join("");
@@ -141,7 +152,10 @@ function nowParts(){var d=new Date();return{date:d.getFullYear()+"-"+pad(d.getMo
 $("quick").innerHTML=["Pee","Poop","Accident","No result"].map(function(e){return'<button type="button" data-q="'+e+'">'+e+"</button>"}).join("");
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 $("quick").addEventListener("click",function(e){var q=e.target.dataset.q;if(!q)return;var n=nowParts();
- D.events.push({id:uid(),date:n.date,time:n.time,event:q,where:$("qwhere").value,before:"",watched:"",notes:""});save();renderToday()});
+ var rid=uid();D.events.push({id:rid,date:n.date,time:n.time,event:q,where:$("qwhere").value,before:"",watched:"",notes:""});save();renderToday();lastQ=rid;
+ $("qmsg").innerHTML="Recorded "+esc(q)+" at "+esc(n.time)+'. <button type="button" class="sec" id="qundo">Undo</button>'});
+var lastQ=null;
+$("qmsg").addEventListener("click",function(e){if(e.target.id!=="qundo"||!lastQ)return;var id=lastQ;lastQ=null;D.events=D.events.filter(function(v){return v.id!==id});save();renderToday();$("qmsg").textContent="Last entry removed."});
 function sortEv(){return D.events.slice().sort(function(a,b){return((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||""))})}
 function renderToday(){var n=nowParts().date,t=D.events.filter(function(e){return e.date===n});var s=summarize(t);
  $("todaybox").innerHTML=t.length?"<p>Successes at the chosen spot: <b>"+s.succ+"</b>. Accidents: <b>"+s.acc+"</b>. Entries today: <b>"+t.length+"</b>.</p>":"<p class='small'>Nothing recorded yet today.</p>"}
@@ -168,12 +182,17 @@ function renderSum(){var s=summarize(D.events);var h='<div class="card"><h3>Over
  $("sumbox").innerHTML=h}
 function bindText(sel,attr,obj){Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){el.value=D[obj][el.dataset[attr]]||"";el.addEventListener("input",function(){D[obj][el.dataset[attr]]=el.value;save()})})}
 bindText("[data-k]","k","plan");bindText("[data-w]","w","week");
-$("bexp").addEventListener("click",function(){var blob=new Blob([JSON.stringify(D,null,1)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="potty-companion-backup-"+nowParts().date+".json";document.body.appendChild(a);a.click();a.remove();$("bmsg").textContent="Backup downloaded."});
+$("bexp").addEventListener("click",function(){var blob=new Blob([JSON.stringify(D,null,1)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="potty-companion-backup-"+nowParts().date+".json";document.body.appendChild(a);a.click();a.remove();D.lastBackup=Date.now();D.backupCount=D.events.length;save();$("bmsg").textContent="Backup downloaded."});
 $("bimp").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||!Array.isArray(d.events))throw 0;
- if(!window.confirm("Replace the records on this device with this backup?"))return;D={v:1,events:d.events.map(function(x){return{id:String(x.id||uid()),date:String(x.date||""),time:String(x.time||""),event:String(x.event||""),where:String(x.where||""),before:String(x.before||""),watched:String(x.watched||""),notes:String(x.notes||"")}}),plan:d.plan||{},week:d.week||{}};save();location.reload()}catch(err){$("bmsg").textContent="That file could not be read as a backup."}};r.readAsText(f)});
+ if(!window.confirm("Replace the records on this device with this backup?"))return;D={v:1,events:d.events.map(function(x){return{id:String(x.id||uid()),date:String(x.date||""),time:String(x.time||""),event:String(x.event||""),where:String(x.where||""),before:String(x.before||""),watched:String(x.watched||""),notes:String(x.notes||"")}}),plan:d.plan||{},week:d.week||{},firstUse:Date.now(),lastBackup:Date.now(),backupCount:d.events.length};save();location.reload()}catch(err){$("bmsg").textContent="That file could not be read as a backup."}};r.readAsText(f)});
+function csvCell(v){v=String(v==null?"":v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return'"'+v.replace(/"/g,'""')+'"'}
+function toCSV(ev){var h=["Date","Time","Event","Where","Watching","Before","Notes"];
+ return[h.map(csvCell).join(",")].concat(sortEv2(ev).map(function(e){return[e.date,e.time,e.event,e.where,e.watched,e.before,e.notes].map(csvCell).join(",")})).join("\r\n")}
+function sortEv2(ev){return ev.slice().sort(function(a,b){return((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||""))})}
+$("bcsv").addEventListener("click",function(){var blob=new Blob(["\ufeff"+toCSV(D.events)],{type:"text/csv;charset=utf-8"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="potty-companion-records-"+nowParts().date+".csv";document.body.appendChild(a);a.click();a.remove();$("bmsg").textContent="Spreadsheet downloaded."});
 $("bprint").addEventListener("click",function(){window.print()});
-$("bclear").addEventListener("click",function(){if(window.confirm("Remove all records from this device?")){D={v:1,events:[],plan:{},week:{}};save();location.reload()}});
-window.PP={summarize:summarize,weekStart:weekStart,validDate:validDate,validTime:validTime};
-resetForm();show("today");save();
+$("bclear").addEventListener("click",function(){if(window.confirm("Remove all records from this device?")){D={v:1,events:[],plan:{},week:{},firstUse:Date.now()};save();location.reload()}});
+window.PP={needsBackup:needsBackup,toCSV:toCSV,summarize:summarize,weekStart:weekStart,validDate:validDate,validTime:validTime};
+resetForm();show("today");save();renderBk();
 })();
 </script></body></html>

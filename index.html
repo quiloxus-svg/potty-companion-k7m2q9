@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Potty Problems Solved Companion App</title>
+<style>
+:root{--teal:#1F7A7A;--tealdk:#155858;--bg:#F2F4F5;--ink:#1d2528;--mut:#5b6a6e;--line:#d3dadc;--card:#fff;--warn:#fff7e0}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--teal);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:1.15rem}header p{margin:2px 0 0;font-size:.85rem;opacity:.9}
+nav{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav button{border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer;color:var(--ink)}
+nav button[aria-current="true"]{background:var(--teal);color:#fff;border-color:var(--teal)}
+main{max-width:900px;margin:0 auto;padding:16px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+h2{margin:.2em 0 .5em;font-size:1.2rem}h3{margin:.8em 0 .3em;font-size:1.02rem}
+label{display:block;font-weight:600;margin:10px 0 3px;font-size:.92rem}
+input,select,textarea{width:100%;padding:9px;border:1px solid #aab5b8;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:70px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+button.pri{background:var(--teal);color:#fff;border:0;padding:10px 16px;border-radius:8px;font:inherit;cursor:pointer;margin-top:12px}
+button.sec{background:#fff;color:var(--tealdk);border:1px solid var(--teal);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer}
+button.dan{background:#fff;color:#8a1c1c;border:1px solid #b44;padding:6px 10px;border-radius:8px;font:inherit;cursor:pointer}
+.note{background:var(--warn);border:1px solid #e6d28a;border-radius:8px;padding:10px;font-size:.9rem;margin-bottom:14px}
+table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#e7eeef}.num{text-align:right}
+.tablewrap{overflow-x:auto}
+.quick{display:flex;flex-wrap:wrap;gap:8px}
+.quick button{flex:1 1 120px;padding:12px;border-radius:10px;border:1px solid var(--teal);background:#fff;color:var(--tealdk);font:inherit;font-weight:600;cursor:pointer}
+.small{font-size:.85rem;color:var(--mut)}
+#warnstore{display:none}
+:focus-visible{outline:3px solid #f5a623;outline-offset:2px}
+@media print{header,nav,button,.noprint{display:none!important}section{display:block!important;page-break-after:always}body{background:#fff}}
+</style></head><body>
+<header><h1>Potty Problems Solved Companion App</h1>
+<p>Plan, record, review. Your records stay on this device.</p></header>
+<nav id="nav" aria-label="Sections"></nav>
+<main>
+<div class="note" id="warnstore">This browser is not letting the app save. Anything you enter will be lost when you close this page. Use Backup to download your records, or try a different browser.</div>
+
+<section id="s-today" class="on"><h2>Today</h2>
+<div class="card"><h3>Quick record</h3>
+<p class="small">Tap what just happened. It is saved with the current date and time and the place chosen below. You can fix any entry in the Log.</p>
+<label for="qwhere">Where</label><select id="qwhere"></select>
+<div class="quick" id="quick" style="margin-top:10px"></div></div>
+<div class="card"><h3>Today so far</h3><div id="todaybox"></div></div>
+<div class="note">General educational tool. It does not diagnose anything and is not veterinary advice. If a dog who was reliable suddenly has accidents, or you see blood, straining, pain, or big changes in thirst or urination, call your veterinarian first.</div></section>
+
+<section id="s-log"><h2>Log</h2>
+<div class="card"><h3 id="fh">Add an entry</h3>
+<form id="f" autocomplete="off"><div class="row">
+<div><label for="fd">Date</label><input type="date" id="fd" required></div>
+<div><label for="ft">Time</label><input type="time" id="ft" required></div>
+<div><label for="fe">Event</label><select id="fe"></select></div>
+<div><label for="fw">Where</label><select id="fw"></select></div>
+<div><label for="fwa">Watching?</label><select id="fwa"><option value="">Not recorded</option><option>Y</option><option>N</option></select></div></div>
+<label for="fb">What was happening before</label><input id="fb" maxlength="200">
+<label for="fn">Notes</label><textarea id="fn" maxlength="500"></textarea>
+<button class="pri" type="submit" id="fsave">Save entry</button> <button class="sec" type="button" id="fcancel" style="display:none">Cancel edit</button></form></div>
+<div class="card"><h3>All entries</h3><div class="tablewrap"><table id="logt"></table></div></div></section>
+
+<section id="s-sum"><h2>Summary</h2>
+<p class="small">Success = a pee or poop recorded at the chosen potty spot. Accident = any entry with event Accident. An entry is never counted as both. Entries with a missing or invalid date or time are listed as not recorded so the totals still add up.</p>
+<div id="sumbox"></div></section>
+
+<section id="s-plan"><h2>My dog and my routine</h2>
+<div class="card"><div class="row">
+<div><label for="p_name">Dog's name</label><input id="p_name" data-k="name"></div>
+<div><label for="p_age">Age or stage</label><input id="p_age" data-k="age"></div></div>
+<label for="p_spot">Chosen potty spot</label><input id="p_spot" data-k="spot" placeholder="Where you want your dog to go">
+<label for="p_cue">Cue word</label><input id="p_cue" data-k="cue">
+<label for="p_reward">Reward</label><input id="p_reward" data-k="reward">
+<label for="p_prompts">When I will offer a potty trip</label><textarea id="p_prompts" data-k="prompts" placeholder="For example: after waking, after meals, after play"></textarea>
+<label for="p_sup">Supervision plan</label><textarea id="p_sup" data-k="sup"></textarea>
+<label for="p_who">Who is responsible for what</label><textarea id="p_who" data-k="who"></textarea>
+<p class="small">Saved as you type. Keep confinement short and never use punishment. Do not limit water.</p></div></section>
+
+<section id="s-week"><h2>Weekly review</h2>
+<div class="card"><p class="small">Look at the Summary, then choose one thing to change for the coming week.</p>
+<label for="w_notice">What I noticed</label><textarea id="w_notice" data-w="notice"></textarea>
+<label for="w_change">The one thing I will change</label><textarea id="w_change" data-w="change"></textarea>
+<label for="w_check">How I will know whether it helped</label><textarea id="w_check" data-w="check"></textarea>
+<label for="w_vet">Anything to ask my veterinarian</label><textarea id="w_vet" data-w="vet"></textarea></div></section>
+
+<section id="s-bk"><h2>Backup and print</h2>
+<div class="card"><h3>Download a backup</h3><p class="small">Saves everything in this app to a file on your device. Do this regularly, because clearing your browser data erases the app's records.</p>
+<button class="pri" id="bexp">Download backup file</button>
+<h3>Restore from a backup</h3><input type="file" id="bimp" accept=".json,application/json">
+<h3>Print</h3><button class="sec" id="bprint">Print this page</button>
+<h3>Clear all records</h3><p class="small">Removes everything from this device. This cannot be undone.</p><button class="dan" id="bclear">Clear everything</button>
+<p id="bmsg" role="status" class="small"></p></div>
+<div class="card"><h3>About this app</h3><p class="small">This is a pilot. Records are stored only in this browser on this device. They are not sent anywhere, so they do not sync between devices, and there is no account to recover them. Use the same browser each time.</p></div></section>
+</main>
+<script>
+(function(){
+"use strict";
+var EV=["Pee","Poop","Accident","No result","Meal","Nap or wake","Play","Note"];
+var WH=["Chosen potty spot","Other outdoor area","Indoor pad or turf","Kitchen","Living room","Hallway","Bedroom","Bathroom","Other room"];
+var WIN=["12 am to 3 am","3 am to 6 am","6 am to 9 am","9 am to 12 pm","12 pm to 3 pm","3 pm to 6 pm","6 pm to 9 pm","9 pm to 12 am"];
+var KEY="ppsca_v1", mem=null, storeOK=true;
+function load(){var d;try{var s=localStorage.getItem(KEY);d=s?JSON.parse(s):null}catch(e){storeOK=false;d=mem}
+ if(!d||typeof d!=="object")d={v:1,events:[],plan:{},week:{}};
+ d.events=Array.isArray(d.events)?d.events:[];d.plan=d.plan||{};d.week=d.week||{};return d}
+var D=load();
+function save(){mem=D;try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){storeOK=false}
+ document.getElementById("warnstore").style.display=storeOK?"none":"block"}
+function validDate(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s||""))return false;var p=s.split("-").map(Number),t=new Date(Date.UTC(p[0],p[1]-1,p[2]));return t.getUTCFullYear()===p[0]&&t.getUTCMonth()===p[1]-1&&t.getUTCDate()===p[2]}
+function validTime(s){return /^([01]\d|2[0-3]):[0-5]\d$/.test(s||"")}
+function weekStart(s){var p=s.split("-").map(Number),t=new Date(Date.UTC(p[0],p[1]-1,p[2]));var dow=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dow);return t.toISOString().slice(0,10)}
+function summarize(ev){
+ var o={days:0,opps:0,succ:0,acc:0,notrec:0,win:WIN.map(function(w){return{w:w,acc:0,succ:0,opp:0}}),winNR:{acc:0,succ:0,opp:0},
+  where:WH.map(function(w){return{w:w,acc:0}}),whereNR:0,weeks:{},weekNR:{acc:0,opp:0,succ:0},dayset:{}};
+ ev.forEach(function(e){
+  var okD=validDate(e.date),okT=validTime(e.time);
+  var isAcc=e.event==="Accident",isPP=e.event==="Pee"||e.event==="Poop",isOpp=isPP||e.event==="No result";
+  var isSucc=isPP&&e.where==="Chosen potty spot";
+  if(okD&&!o.dayset[e.date]){o.dayset[e.date]=1;o.days++}
+  if(isAcc)o.acc++; if(isOpp)o.opps++; if(isSucc)o.succ++;
+  var wi=okT?Math.floor(parseInt(e.time.slice(0,2),10)/3):-1;
+  var b=wi>=0?o.win[wi]:o.winNR;
+  if(isAcc)b.acc++; if(isSucc)b.succ++; if(isOpp)b.opp++;
+  if(isAcc){var k=WH.indexOf(e.where);if(k>=0)o.where[k].acc++;else o.whereNR++}
+  var wk=okD?weekStart(e.date):null; var wb;
+  if(wk){wb=o.weeks[wk]||(o.weeks[wk]={acc:0,opp:0,succ:0})}else wb=o.weekNR;
+  if(isAcc)wb.acc++; if(isOpp)wb.opp++; if(isSucc)wb.succ++;
+ });return o}
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function opts(el,arr){el.innerHTML=arr.map(function(a){return"<option>"+esc(a)+"</option>"}).join("")}
+var tabs=[["today","Today"],["log","Log"],["sum","Summary"],["plan","Routine"],["week","Weekly review"],["bk","Backup and print"]];
+function show(id){tabs.forEach(function(t){$("s-"+t[0]).classList.toggle("on",t[0]===id)});
+ Array.prototype.forEach.call($("nav").children,function(b){b.setAttribute("aria-current",b.dataset.t===id?"true":"false")});
+ if(id==="sum")renderSum();if(id==="log")renderLog();if(id==="today")renderToday()}
+$("nav").innerHTML=tabs.map(function(t){return'<button type="button" data-t="'+t[0]+'">'+t[1]+"</button>"}).join("");
+$("nav").addEventListener("click",function(e){if(e.target.dataset.t)show(e.target.dataset.t)});
+opts($("fe"),EV);opts($("fw"),WH);opts($("qwhere"),WH);
+function pad(n){return(n<10?"0":"")+n}
+function nowParts(){var d=new Date();return{date:d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()),time:pad(d.getHours())+":"+pad(d.getMinutes())}}
+$("quick").innerHTML=["Pee","Poop","Accident","No result"].map(function(e){return'<button type="button" data-q="'+e+'">'+e+"</button>"}).join("");
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+$("quick").addEventListener("click",function(e){var q=e.target.dataset.q;if(!q)return;var n=nowParts();
+ D.events.push({id:uid(),date:n.date,time:n.time,event:q,where:$("qwhere").value,before:"",watched:"",notes:""});save();renderToday()});
+function sortEv(){return D.events.slice().sort(function(a,b){return((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||""))})}
+function renderToday(){var n=nowParts().date,t=D.events.filter(function(e){return e.date===n});var s=summarize(t);
+ $("todaybox").innerHTML=t.length?"<p>Successes at the chosen spot: <b>"+s.succ+"</b>. Accidents: <b>"+s.acc+"</b>. Entries today: <b>"+t.length+"</b>.</p>":"<p class='small'>Nothing recorded yet today.</p>"}
+var editId=null;
+function resetForm(){editId=null;var n=nowParts();$("fd").value=n.date;$("ft").value=n.time;$("fe").selectedIndex=0;$("fw").selectedIndex=0;$("fwa").value="";$("fb").value="";$("fn").value="";$("fh").textContent="Add an entry";$("fcancel").style.display="none"}
+$("f").addEventListener("submit",function(e){e.preventDefault();
+ var rec={date:$("fd").value,time:$("ft").value,event:$("fe").value,where:$("fw").value,before:$("fb").value,watched:$("fwa").value,notes:$("fn").value};
+ if(editId){D.events=D.events.map(function(x){return x.id===editId?Object.assign({id:editId},rec):x})}else{rec.id=uid();D.events.push(rec)}
+ save();resetForm();renderLog()});
+$("fcancel").addEventListener("click",resetForm);
+function renderLog(){var ev=sortEv().reverse();
+ $("logt").innerHTML="<thead><tr><th>Date</th><th>Time</th><th>Event</th><th>Where</th><th>Before</th><th>Notes</th><th></th></tr></thead><tbody>"+
+ (ev.length?ev.map(function(e){return"<tr><td>"+esc(e.date)+"</td><td>"+esc(e.time)+"</td><td>"+esc(e.event)+"</td><td>"+esc(e.where)+"</td><td>"+esc(e.before)+"</td><td>"+esc(e.notes)+'</td><td class="noprint"><button class="sec" data-ed="'+e.id+'">Edit</button> <button class="dan" data-dl="'+e.id+'">Delete</button></td></tr>'}).join(""):'<tr><td colspan="7">No entries yet.</td></tr>')+"</tbody>"}
+$("logt").addEventListener("click",function(e){var id=e.target.dataset.ed,dl=e.target.dataset.dl;
+ if(id){var x=D.events.filter(function(v){return v.id===id})[0];if(!x)return;editId=id;$("fd").value=x.date;$("ft").value=x.time;$("fe").value=x.event;$("fw").value=x.where;$("fwa").value=x.watched||"";$("fb").value=x.before||"";$("fn").value=x.notes||"";$("fh").textContent="Edit entry";$("fcancel").style.display="inline-block";$("fd").scrollIntoView()}
+ if(dl&&confirmDel()){D.events=D.events.filter(function(v){return v.id!==dl});save();renderLog()}});
+function confirmDel(){return window.confirm("Delete this entry?")}
+function tbl(h,rows){return'<div class="tablewrap"><table><thead><tr>'+h.map(function(x,i){return"<th"+(i?' class="num"':"")+">"+x+"</th>"}).join("")+"</tr></thead><tbody>"+rows.map(function(r){return"<tr>"+r.map(function(c,i){return"<td"+(i?' class="num"':"")+">"+c+"</td>"}).join("")+"</tr>"}).join("")+"</tbody></table></div>"}
+function renderSum(){var s=summarize(D.events);var h='<div class="card"><h3>Overall</h3>'+tbl(["Measure","Count"],[["Entries",D.events.length],["Days with records",s.days],["Potty opportunities (pee, poop, no result)",s.opps],["Successes at the chosen spot",s.succ],["Accidents",s.acc]])+"</div>";
+ h+='<div class="card"><h3>By time of day</h3>'+tbl(["Time window","Accidents","Successes","Opportunities"],s.win.map(function(w){return[w.w,w.acc,w.succ,w.opp]}).concat([["Time not recorded or invalid",s.winNR.acc,s.winNR.succ,s.winNR.opp]]))+"</div>";
+ h+='<div class="card"><h3>Accidents by place</h3>'+tbl(["Where","Accidents"],s.where.map(function(w){return[esc(w.w),w.acc]}).concat([["Where not recorded or not on the list",s.whereNR]]))+"</div>";
+ var wk=Object.keys(s.weeks).sort();
+ h+='<div class="card"><h3>By week (weeks start Monday)</h3>'+tbl(["Week starting","Accidents","Opportunities","Successes"],wk.map(function(k){var w=s.weeks[k];return[k,w.acc,w.opp,w.succ]}).concat([["Date not recorded or invalid",s.weekNR.acc,s.weekNR.opp,s.weekNR.succ]]))+"</div>";
+ $("sumbox").innerHTML=h}
+function bindText(sel,attr,obj){Array.prototype.forEach.call(document.querySelectorAll(sel),function(el){el.value=D[obj][el.dataset[attr]]||"";el.addEventListener("input",function(){D[obj][el.dataset[attr]]=el.value;save()})})}
+bindText("[data-k]","k","plan");bindText("[data-w]","w","week");
+$("bexp").addEventListener("click",function(){var blob=new Blob([JSON.stringify(D,null,1)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="potty-companion-backup-"+nowParts().date+".json";document.body.appendChild(a);a.click();a.remove();$("bmsg").textContent="Backup downloaded."});
+$("bimp").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(!d||!Array.isArray(d.events))throw 0;
+ if(!window.confirm("Replace the records on this device with this backup?"))return;D={v:1,events:d.events.map(function(x){return{id:String(x.id||uid()),date:String(x.date||""),time:String(x.time||""),event:String(x.event||""),where:String(x.where||""),before:String(x.before||""),watched:String(x.watched||""),notes:String(x.notes||"")}}),plan:d.plan||{},week:d.week||{}};save();location.reload()}catch(err){$("bmsg").textContent="That file could not be read as a backup."}};r.readAsText(f)});
+$("bprint").addEventListener("click",function(){window.print()});
+$("bclear").addEventListener("click",function(){if(window.confirm("Remove all records from this device?")){D={v:1,events:[],plan:{},week:{}};save();location.reload()}});
+window.PP={summarize:summarize,weekStart:weekStart,validDate:validDate,validTime:validTime};
+resetForm();show("today");save();
+})();
+</script></body></html>
